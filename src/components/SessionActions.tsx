@@ -9,7 +9,12 @@ import { Sheet } from "./Sheet";
 
 export type ActionTarget = { id: string; name: string; status: Status; date: string };
 
-const Ctx = createContext<{ open: (t: ActionTarget) => void } | null>(null);
+type Ctx = {
+  open: (t: ActionTarget) => void;
+  /** Muestra un aviso de 4 s; con `undo`, ofrece «Deshacer». */
+  notify: (text: string, undo?: () => void) => void;
+};
+const Ctx = createContext<Ctx | null>(null);
 
 export function useSessionActions() {
   const ctx = useContext(Ctx);
@@ -17,7 +22,7 @@ export function useSessionActions() {
   return ctx;
 }
 
-type Toast = { text: string; undo?: { id: string; status: Status } };
+type Toast = { text: string; undo?: () => void };
 
 const MESSAGES: Record<Status, string> = {
   hecha: "hecha.",
@@ -35,7 +40,8 @@ export function ActionsProvider({ today, children }: { today: string; children: 
 
   const open = useCallback((t: ActionTarget) => setTarget(t), []);
   const close = useCallback(() => setTarget(null), []);
-  const value = useMemo(() => ({ open }), [open]);
+  const notify = useCallback((text: string, undo?: () => void) => setToast({ text, undo }), []);
+  const value = useMemo(() => ({ open, notify }), [open, notify]);
 
   // El aviso dura 4 segundos.
   useEffect(() => {
@@ -51,7 +57,13 @@ export function ActionsProvider({ today, children }: { today: string; children: 
       if (!res.ok) return setToast({ text: res.error });
       setToast({
         text: `${t.name}: ${MESSAGES[status]}`,
-        undo: isUndo ? undefined : { id: t.id, status: t.status },
+        undo: isUndo
+          ? undefined
+          : () =>
+              startTransition(async () => {
+                const res = await setStatus(t.id, t.status);
+                if (!res.ok) setToast({ text: res.error });
+              }),
       });
     });
   }
@@ -99,12 +111,9 @@ export function ActionsProvider({ today, children }: { today: string; children: 
                 type="button"
                 className="sh-toast-action"
                 onClick={() => {
-                  const { id, status } = toast.undo!;
+                  const undo = toast.undo!;
                   setToast(null);
-                  startTransition(async () => {
-                    const res = await setStatus(id, status);
-                    if (!res.ok) setToast({ text: res.error });
-                  });
+                  undo();
                 }}
               >
                 Deshacer

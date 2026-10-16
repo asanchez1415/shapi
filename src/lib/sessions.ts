@@ -64,6 +64,7 @@ function sportOf(r: Row): SportSlug {
 
 function toItem(r: Row, from?: string, to?: string): SessionItem {
   const sport = sportOf(r);
+  const described = describeSession(sport, r.structure, r.target);
   return {
     id: r.id,
     name: r.name,
@@ -71,7 +72,8 @@ function toItem(r: Row, from?: string, to?: string): SessionItem {
     time: r.scheduled_time ? r.scheduled_time.slice(0, 5) : null,
     status: r.status,
     sport,
-    card: describeSession(sport, r.structure, r.target).card,
+    minutes: described.minutes,
+    card: described.card,
     movedTo: to ? formatShort(to) : null,
     movedFrom: from ? formatShort(from) : null,
   };

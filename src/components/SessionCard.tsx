@@ -1,7 +1,8 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { CardLines } from "@/lib/describe";
 import type { SportSlug, Status } from "@/lib/types";
-import { NavIcon } from "./icons";
+import { NavIcon, SPORT_META } from "./icons";
 import { SportTag } from "./SportTag";
 import { StatusButton } from "./StatusButton";
 
@@ -20,6 +21,8 @@ type Props = {
   movedTo?: string | null;
   movedFrom?: string | null;
   compact?: boolean;
+  /** Versión para el calendario por horas: una línea de título y un resumen; el alto lo da la duración. */
+  timed?: boolean;
 };
 
 // Tarjeta de sesión del sistema de diseño.
@@ -35,14 +38,20 @@ export function SessionCard({
   movedTo,
   movedFrom,
   compact,
+  timed,
 }: Props) {
   const moved = status === "movida";
-  const cls = ["sh-card", compact && "sh-card-compact", moved && "sh-card-moved"]
+  const cls = [
+    "sh-card",
+    compact && "sh-card-compact",
+    timed && "sh-card-timed",
+    moved && "sh-card-moved",
+  ]
     .filter(Boolean)
     .join(" ");
 
   const title = href ? (
-    <Link href={href} className="sh-card-open">
+    <Link href={href} className="sh-card-open" draggable={false}>
       {name}
     </Link>
   ) : (
@@ -75,6 +84,27 @@ export function SessionCard({
       )}
     </div>
   );
+
+  if (timed) {
+    const summary = [time, card.lead, card.duration].filter(Boolean).join(" · ");
+    return (
+      <article
+        className={cls}
+        style={{ "--sport": (SPORT_META[sport] ?? SPORT_META.running).color } as CSSProperties}
+      >
+        <div className="sh-timed-head">
+          {statusButton(18)}
+          <h3 className="sh-card-name" title={name}>
+            {title}
+          </h3>
+        </div>
+        {summary && <div className="sh-timed-sum sh-timed-main sh-num">{summary}</div>}
+        {card.side && <div className="sh-timed-sum sh-num">{card.side}</div>}
+        {moved && movedTo && <div className="sh-timed-sum">A {movedTo}</div>}
+        {!moved && movedFrom && <div className="sh-timed-sum">Desde {movedFrom}</div>}
+      </article>
+    );
+  }
 
   if (compact) {
     return (

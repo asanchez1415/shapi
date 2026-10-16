@@ -21,6 +21,8 @@ export type SessionItem = {
   time: string | null; // HH:MM
   status: Status;
   sport: SportSlug;
+  /** Duración estimada o fijada, en minutos; null si no se puede calcular. */
+  minutes: number | null;
   /** Filas de la tarjeta (sin listar ejercicios). */
   card: CardLines;
   /** Para una sesión movida: fecha del duplicado. */
