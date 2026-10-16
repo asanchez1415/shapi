@@ -198,10 +198,35 @@
   font-size: 1rem;
   color: var(--texto);
 }
+.sh-card-when,
 .sh-card-side,
 .sh-card-dur {
   font-size: 0.875rem;
   color: var(--texto-secundario);
+}
+
+.sh-card-when-none {
+  color: var(--texto-deshabilitado);
+}
+
+/* Arrastrar tarjetas entre días (notebook) */
+.wk-drag[draggable="true"] {
+  cursor: grab;
+}
+.wk-drag[draggable="true"]:active {
+  cursor: grabbing;
+}
+.wk-col-blocked {
+  opacity: 0.4;
+}
+.wk-col-over {
+  outline: 2px dashed var(--acento);
+  outline-offset: 2px;
+  border-radius: var(--radio-tarjeta);
+}
+.wk-pending {
+  opacity: 0.7;
+  transition: opacity 0.15s;
 }
 
 /* Detalle de sesión */
@@ -284,162 +309,28 @@
   padding: var(--espacio-2) 0;
   max-width: 400px;
 }
+.wk {
+  display: none;
+}
+.wk-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  min-height: 420px;
+}
+.wk-col .sh-day {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 92px; /* deja lugar al chip "Hoy" en todas las columnas */
+  flex: none;
+  padding: var(--espacio-2) var(--espacio-1);
+  border-bottom: 0;
+}
 .wk-rest {
   font-size: 0.875rem;
   color: var(--texto-secundario);
   padding: var(--espacio-3) var(--espacio-1);
-}
-
-/* Calendario por horas (solo notebook) */
-.wkg {
-  display: none;
-  margin-top: var(--espacio-4);
-}
-.wkg-row {
-  display: grid;
-  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
-  column-gap: var(--espacio-2);
-}
-.wkg-head {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--fondo);
-}
-.wkg-day .sh-day {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-height: 72px; /* deja lugar al chip "Hoy" en todas las columnas */
-  padding: var(--espacio-2) var(--espacio-1);
-  border-bottom: 0;
-}
-.wkg-gutter {
-  font-size: 0.75rem;
-  color: var(--texto-secundario);
-}
-.wkg-stripLabel {
-  padding-top: var(--espacio-2);
-}
-.wkg-strip {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espacio-2);
-  min-height: 56px;
-  padding-bottom: var(--espacio-3);
-}
-.wkg-bodyRow {
-  margin-top: var(--espacio-2);
-}
-.wkg-hours {
-  position: relative;
-}
-.wkg-hour {
-  position: absolute;
-  right: 0;
-  transform: translateY(-50%);
-  line-height: 1;
-}
-.wkg-hours .wkg-hour:first-child {
-  transform: none;
-}
-.wkg-body {
-  position: relative;
-  border-radius: var(--radio-tarjeta);
-  background-image: linear-gradient(to bottom, var(--linea) 1px, transparent 1px);
-  background-size: 100% var(--hour);
-}
-.wkg-item {
-  position: absolute;
-}
-.wkg-item > .sh-card {
-  height: 100%;
-}
-.wkg-drag[draggable="true"] {
-  cursor: grab;
-}
-.wkg-drag[draggable="true"]:active {
-  cursor: grabbing;
-}
-.wkg-pending {
-  opacity: 0.7;
-  transition: opacity 0.15s;
-}
-.wkg-dragging .wkg-drag {
-  opacity: 0.9;
-}
-.wkg-blocked {
-  opacity: 0.4;
-}
-.wkg-over {
-  outline: 2px dashed var(--acento);
-  outline-offset: -2px;
-}
-.wkg-ghost {
-  position: absolute;
-  left: 1px;
-  right: 1px;
-  z-index: 2;
-  pointer-events: none;
-  border: 2px dashed var(--acento);
-  border-radius: var(--radio-tarjeta);
-  background: rgba(17, 17, 17, 0.06);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px var(--espacio-2);
-}
-
-/* Tarjeta en el calendario por horas */
-.sh-card-timed {
-  container-type: size;
-  flex-direction: column;
-  gap: 2px;
-  padding: 4px var(--espacio-2) 4px var(--espacio-2);
-  overflow: hidden;
-  border-left: 3px solid var(--sport, var(--linea));
-  border-radius: 8px;
-}
-.sh-timed-head {
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-1);
-  min-width: 0;
-}
-.sh-card-timed .sh-card-status {
-  width: 28px;
-  height: 28px;
-  margin: 0 0 0 -6px;
-}
-.sh-card-timed .sh-card-status-ground {
-  width: 22px;
-  height: 22px;
-}
-.sh-card-timed .sh-card-name {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.sh-timed-sum {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  color: var(--texto-secundario);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: none;
-}
-@container (min-height: 56px) {
-  .sh-timed-main {
-    display: block;
-  }
-}
-@container (min-height: 76px) {
-  .sh-timed-sum {
-    display: block;
-  }
 }
 
 /* Notebook */
@@ -471,8 +362,11 @@
   .account-mobile {
     display: none;
   }
-  .wkg {
-    display: block;
+  .wk {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--espacio-2);
+    margin-top: var(--espacio-4);
   }
 }
 

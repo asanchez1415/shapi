@@ -5,7 +5,7 @@ import { AdherenceBar } from "./AdherenceBar";
 import { DayHeader } from "./DayHeader";
 import { NavIcon } from "./icons";
 import { SessionCard } from "./SessionCard";
-import { WeekGrid } from "./WeekGrid";
+import { WeekColumns } from "./WeekColumns";
 
 function Card({ s, compact }: { s: SessionItem; compact?: boolean }) {
   return (
@@ -81,8 +81,8 @@ export function WeekView({ start, today, sessions }: Props) {
         ))}
       </div>
 
-      {/* Notebook: calendario por horas */}
-      <WeekGrid days={days} today={today} sessions={sessions} />
+      {/* Notebook */}
+      <WeekColumns days={days} today={today} sessions={sessions} />
     </>
   );
 }

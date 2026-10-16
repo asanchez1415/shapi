@@ -1,8 +1,7 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
 import type { CardLines } from "@/lib/describe";
 import type { SportSlug, Status } from "@/lib/types";
-import { NavIcon, SPORT_META } from "./icons";
+import { NavIcon } from "./icons";
 import { SportTag } from "./SportTag";
 import { StatusButton } from "./StatusButton";
 
@@ -21,8 +20,6 @@ type Props = {
   movedTo?: string | null;
   movedFrom?: string | null;
   compact?: boolean;
-  /** Versión para el calendario por horas: una línea de título y un resumen; el alto lo da la duración. */
-  timed?: boolean;
 };
 
 // Tarjeta de sesión del sistema de diseño.
@@ -38,13 +35,11 @@ export function SessionCard({
   movedTo,
   movedFrom,
   compact,
-  timed,
 }: Props) {
   const moved = status === "movida";
   const cls = [
     "sh-card",
     compact && "sh-card-compact",
-    timed && "sh-card-timed",
     moved && "sh-card-moved",
   ]
     .filter(Boolean)
@@ -64,6 +59,10 @@ export function SessionCard({
 
   const details = (
     <div className="sh-card-rows">
+      <div className={`sh-card-when sh-card-iconed sh-num${time ? "" : " sh-card-when-none"}`}>
+        <NavIcon name="schedule" size={16} />
+        {time ?? "Sin hora"}
+      </div>
       {card.lead && (
         <div className="sh-card-target sh-card-iconed sh-num">
           {card.leadKind && <NavIcon name={card.leadKind} size={16} />}
@@ -85,33 +84,11 @@ export function SessionCard({
     </div>
   );
 
-  if (timed) {
-    const summary = [time, card.lead, card.duration].filter(Boolean).join(" · ");
-    return (
-      <article
-        className={cls}
-        style={{ "--sport": (SPORT_META[sport] ?? SPORT_META.running).color } as CSSProperties}
-      >
-        <div className="sh-timed-head">
-          {statusButton(18)}
-          <h3 className="sh-card-name" title={name}>
-            {title}
-          </h3>
-        </div>
-        {summary && <div className="sh-timed-sum sh-timed-main sh-num">{summary}</div>}
-        {card.side && <div className="sh-timed-sum sh-num">{card.side}</div>}
-        {moved && movedTo && <div className="sh-timed-sum">A {movedTo}</div>}
-        {!moved && movedFrom && <div className="sh-timed-sum">Desde {movedFrom}</div>}
-      </article>
-    );
-  }
-
   if (compact) {
     return (
       <article className={cls}>
         <div className="sh-card-top">
           {statusButton(20)}
-          {time && <span className="sh-card-time sh-num">{time}</span>}
         </div>
         <SportTag sport={sport} />
         <h3 className="sh-card-name">{title}</h3>
@@ -128,7 +105,6 @@ export function SessionCard({
       <div className="sh-card-body">
         <div className="sh-card-top">
           <SportTag sport={sport} />
-          {time && <span className="sh-card-time sh-num">{time}</span>}
         </div>
         <h3 className="sh-card-name">{title}</h3>
         {details}
