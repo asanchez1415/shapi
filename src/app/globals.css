@@ -1,0 +1,541 @@
+@import "../styles/tokens.css";
+@import "../styles/shapi.css";
+
+/* Login */
+.login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--espacio-6) var(--margen-pantalla);
+}
+.login-box {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-8);
+}
+.login-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+.login-brand {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 2.125rem;
+  font-weight: 600;
+}
+.login-lead {
+  margin: 0;
+  color: var(--texto-secundario);
+}
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+/* Marco de la app */
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.app-side {
+  display: none;
+}
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--espacio-4) var(--margen-pantalla) var(--espacio-8);
+}
+.app-tabs {
+  position: sticky;
+  bottom: 0;
+}
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+.account-name {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-width: 0;
+  color: var(--texto);
+}
+.account-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-mobile {
+  margin-top: var(--espacio-6);
+}
+.page-note {
+  margin: var(--espacio-3) 0 0;
+  color: var(--texto-secundario);
+}
+
+/* Enlaces con aspecto de botón de navegación */
+.sh-tab,
+.sh-sidenav-item,
+.ib {
+  text-decoration: none;
+}
+.sh-tab {
+  display: flex;
+}
+
+/* Piezas de encabezado (del diseño) */
+.hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  min-height: 56px;
+}
+.hd-title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.625rem;
+  font-weight: 600;
+}
+.hd-sub {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}
+.hd-actions {
+  display: flex;
+  gap: var(--espacio-2);
+  align-items: center;
+}
+.ib {
+  min-width: var(--toque-minimo);
+  height: var(--toque-minimo);
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--texto);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-1);
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--radio-pastilla);
+}
+.ib:hover {
+  background: var(--superficie);
+}
+.ib-border {
+  border: var(--borde-fino) solid var(--linea);
+}
+.ib-text {
+  padding: 0 var(--espacio-4);
+}
+.sec {
+  margin-top: var(--espacio-6);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+/* Tarjeta clicable: el nombre enlaza y su área cubre toda la tarjeta */
+.sh-card {
+  position: relative;
+}
+.sh-card-open {
+  color: inherit;
+  text-decoration: none;
+}
+.sh-card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radio-tarjeta);
+}
+.sh-card:hover .sh-card-open,
+.sh-card-open:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.sh-card-open:focus-visible::after {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+.sh-card-status {
+  position: relative;
+  z-index: 1;
+}
+
+/* Filas de la tarjeta */
+.sh-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--espacio-2);
+}
+.sh-card-iconed {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+.sh-card-iconed .sh-icon {
+  color: var(--texto-secundario);
+}
+.sh-card .sh-card-rows .sh-card-target {
+  font-size: 1rem;
+  color: var(--texto);
+}
+.sh-card-side,
+.sh-card-dur {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}
+
+/* Detalle de sesión */
+.detail {
+  max-width: 640px;
+}
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: var(--toque-minimo);
+  color: var(--texto-secundario);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+.detail-back:hover {
+  color: var(--texto);
+}
+.meta {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--espacio-3);
+  padding: var(--espacio-4) 0;
+  border-bottom: var(--borde-fino) solid var(--linea);
+}
+.kpis.k2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.sec-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 var(--espacio-3);
+}
+.sec-h h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+.blk {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) 0;
+  border-top: var(--borde-fino) solid var(--linea);
+  font-variant-numeric: tabular-nums;
+}
+.blk-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.blk-note {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}
+.blk > span:last-child:not(.blk-main) {
+  color: var(--texto-secundario);
+  font-size: 0.875rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.detail .sh-ex {
+  grid-template-columns: 1fr;
+  border-bottom: 0;
+  border-top: var(--borde-fino) solid var(--linea);
+}
+.detail-notes {
+  margin: 0;
+  color: var(--texto-secundario);
+}
+
+/* Semana */
+.wk-adh {
+  padding: var(--espacio-2) 0;
+  max-width: 400px;
+}
+.wk {
+  display: none;
+}
+.wk-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  min-height: 420px;
+}
+.wk-col .sh-day {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 92px; /* deja lugar al chip "Hoy" en todas las columnas */
+  flex: none;
+  padding: var(--espacio-2) var(--espacio-1);
+  border-bottom: 0;
+}
+.wk-rest {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+  padding: var(--espacio-3) var(--espacio-1);
+}
+
+/* Notebook */
+@media (min-width: 1024px) {
+  .app {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .app-side {
+    display: block;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+  }
+  .app-tabs {
+    display: none;
+  }
+  .app-main {
+    max-width: 1680px;
+    padding: var(--espacio-8) var(--espacio-6);
+  }
+  .hd-title {
+    font-size: 1.75rem;
+    line-height: 2.125rem;
+  }
+  .wk-list {
+    display: none;
+  }
+  .account-mobile {
+    display: none;
+  }
+  .wk {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--espacio-2);
+    margin-top: var(--espacio-4);
+  }
+}
+
+/* Hoja de acciones: ventana centrada en notebook */
+@media (min-width: 1024px) {
+  .sh-sheet {
+    left: 50%;
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    width: 440px;
+    transform: translate(-50%, -50%);
+    border: var(--borde-fino) solid var(--linea);
+    border-radius: var(--radio-tarjeta);
+    animation: none;
+    padding-top: var(--espacio-6);
+  }
+  .sh-sheet-grip {
+    display: none;
+  }
+}
+
+/* Aviso con "Deshacer" */
+.toast-slot {
+  position: fixed;
+  z-index: 20;
+  left: var(--margen-pantalla);
+  right: var(--margen-pantalla);
+  bottom: 96px;
+}
+@media (min-width: 1024px) {
+  .toast-slot {
+    left: auto;
+    right: 32px;
+    bottom: 32px;
+    width: 360px;
+  }
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-4);
+}
+.detail-actions .sh-btn {
+  text-decoration: none;
+  flex: 1;
+}
+@media (min-width: 1024px) {
+  .detail-actions .sh-btn {
+    flex: none;
+  }
+}
+
+/* Hoy */
+.today-cols {
+  display: block;
+}
+.today-adh-mobile {
+  padding: var(--espacio-2) 0;
+}
+.today-adh-desktop {
+  display: none;
+}
+.up-list {
+  display: flex;
+  flex-direction: column;
+}
+.up-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: 56px;
+  padding: var(--espacio-2) 0;
+  border-top: var(--borde-fino) solid var(--linea);
+  color: inherit;
+  text-decoration: none;
+}
+.up-row:hover .up-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.up-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.up-name {
+  font-weight: 600;
+}
+.up-date {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+  white-space: nowrap;
+}
+@media (min-width: 1024px) {
+  .today-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 48px;
+    align-items: start;
+    margin-top: var(--espacio-6);
+  }
+  .today-adh-mobile {
+    display: none;
+  }
+  .today-adh-desktop {
+    display: block;
+  }
+  .today-cols > div > .sec {
+    margin-top: 0;
+  }
+}
+
+/* Edición de sesión */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-6);
+  margin-top: var(--espacio-6);
+}
+.edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+.edit-h {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+  align-items: start;
+}
+.edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  background: var(--superficie);
+  border-radius: var(--radio-tarjeta);
+}
+.edit-row .sh-field-box {
+  background: var(--fondo);
+}
+.edit-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.edit-row-title {
+  font-weight: 600;
+}
+.edit-actions {
+  display: flex;
+  gap: var(--espacio-2);
+  justify-content: flex-end;
+}
+.edit-actions .sh-btn {
+  text-decoration: none;
+}
+@media (max-width: 1023px) {
+  .edit-actions .sh-btn {
+    flex: 1;
+  }
+}
+.sh-field-area {
+  align-items: stretch;
+}
+.sh-field-area textarea {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  resize: vertical;
+  font: inherit;
+  color: var(--texto);
+  padding: var(--espacio-3) 0;
+}
+
+/* La hoja y su fondo van por encima de los botones de estado de las tarjetas */
+.sh-scrim {
+  z-index: 30;
+}
+.sh-sheet {
+  z-index: 31;
+}
+
+.edit-grid > .sh-field {
+  min-width: 0;
+}

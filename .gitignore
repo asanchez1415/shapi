@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# Variables de entorno: nunca se suben
+.env
+.env.local
+.env.*.local
+
+.DS_Store
+.vercel
