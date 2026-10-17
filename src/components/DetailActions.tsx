@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useSessionActions, type ActionTarget } from "./SessionActions";
 
-// Acciones del detalle: cambiar estado y, si sigue pendiente, editar.
-export function DetailActions({ target, editHref }: { target: ActionTarget; editHref?: string }) {
+// Acciones del detalle: cambiar estado. Las rutinas se editan desde «Editar semana».
+export function DetailActions({ target }: { target: ActionTarget }) {
   const { open } = useSessionActions();
   if (target.status === "movida") return null;
   return (
@@ -12,11 +11,6 @@ export function DetailActions({ target, editHref }: { target: ActionTarget; edit
       <button type="button" className="sh-btn sh-btn-secondary" onClick={() => open(target)}>
         Cambiar estado
       </button>
-      {editHref && (
-        <Link href={editHref} className="sh-btn sh-btn-secondary">
-          Editar
-        </Link>
-      )}
     </div>
   );
 }

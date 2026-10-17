@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type DragEvent } from "react";
 import { saveWeek, type WeekSavePayload } from "@/app/(app)/actions";
 import type { EditKind, EditPayload } from "@/lib/edit";
 import type { SportSlug } from "@/lib/types";
-import { SelectField } from "./Fields";
-import { StatusIcon } from "./icons";
+import { NavIcon, StatusIcon } from "./icons";
 import { SessionFields } from "./SessionFields";
 import { useSessionActions } from "./SessionActions";
 import { SportTag } from "./SportTag";
@@ -25,7 +24,6 @@ export type EditorTemplate = { id: string; sport: SportSlug; kind: EditKind; pay
 export type EditorTarget = { start: string; label: string; blocked: boolean };
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-const DAY_OPTIONS = DAYS.map((d, i) => ({ value: String(i), label: d }));
 const STATUS_OK = ["pendiente"];
 
 let counter = 0;
@@ -47,6 +45,13 @@ export function WeekEditor({
   const [items, setItems] = useState<EditorItem[]>(initial);
   const [removed, setRemoved] = useState<string[]>([]);
   const [open, setOpen] = useState<string | null>(null);
+  const [dragKey, setDragKeyState] = useState<string | null>(null);
+  const dragRef = useRef<string | null>(null); // lectura inmediata dentro de los eventos de arrastre
+  const setDragKey = (k: string | null) => {
+    dragRef.current = k;
+    setDragKeyState(k);
+  };
+  const [overDay, setOverDay] = useState<number | null>(null);
   const [propagate, setPropagate] = useState(targets.length > 0);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +76,15 @@ export function WeekEditor({
       { key, id: null, templateId: t.id, sport: t.sport, status: "pendiente", day, kind: t.kind, payload: structuredClone(t.payload) },
     ]);
     setOpen(key);
+  }
+
+  // Arrastrar una rutina pendiente a otro día cambia su día.
+  function dropOn(e: DragEvent, day: number) {
+    e.preventDefault();
+    const key = dragRef.current;
+    setDragKey(null);
+    setOverDay(null);
+    if (key) patch(key, (x) => ({ ...x, day }));
   }
 
   const replaceable = targets.filter((t) => !t.blocked);
@@ -111,15 +125,44 @@ export function WeekEditor({
           .filter((it) => it.day === day)
           .sort((a, b) => (a.payload.time || "99").localeCompare(b.payload.time || "99"));
         return (
-          <section key={dayName} className="wedit-day">
+          <section
+            key={dayName}
+            className={`wedit-day${overDay === day && dragKey ? " wedit-over" : ""}`}
+            onDragOver={(e) => {
+              if (!dragRef.current) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setOverDay(day);
+            }}
+            onDrop={(e) => dropOn(e, day)}
+          >
             <h2 className="edit-h">{dayName}</h2>
             {list.map((it) => {
               const editable = STATUS_OK.includes(it.status);
               const isOpen = open === it.key;
               return (
                 <div key={it.key} className={`edit-row wedit-item${editable ? "" : " wedit-locked"}`}>
-                  <div className="edit-row-head">
+                  <div
+                    className={`edit-row-head${editable ? " wedit-grab" : ""}`}
+                    {...(editable
+                      ? {
+                          draggable: true,
+                          onDragStart: (e: DragEvent) => {
+                            setDragKey(it.key);
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", it.key);
+                            const row = (e.currentTarget as HTMLElement).parentElement;
+                            if (row) e.dataTransfer.setDragImage(row, 16, 16);
+                          },
+                          onDragEnd: () => {
+                            setDragKey(null);
+                            setOverDay(null);
+                          },
+                        }
+                      : {})}
+                  >
                     <div className="wedit-title">
+                      {editable && <NavIcon name="grip" size={18} />}
                       <SportTag sport={it.sport} />
                       <span className="edit-row-title">{it.payload.name || "Sin nombre"}</span>
                       <span className="wedit-time sh-num">{it.payload.time || "Sin hora"}</span>
@@ -142,12 +185,6 @@ export function WeekEditor({
                   </div>
                   {editable && isOpen && (
                     <div className="stack">
-                      <SelectField
-                        label="Día"
-                        value={String(it.day)}
-                        options={DAY_OPTIONS}
-                        onChange={(v) => patch(it.key, (x) => ({ ...x, day: Number(v) }))}
-                      />
                       <SessionFields kind={it.kind} value={it.payload} onChange={(p) => patch(it.key, (x) => ({ ...x, payload: p }))} />
                     </div>
                   )}

@@ -49,7 +49,6 @@ export function SessionDetailView({ session }: { session: SessionDetail }) {
 
       <DetailActions
         target={{ id: session.id, name: session.name, status: session.status, date: session.date }}
-        editHref={session.status === "pendiente" ? `/sesion/${session.id}/editar` : undefined}
       />
 
       {stats.length > 0 && (

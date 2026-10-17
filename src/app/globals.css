@@ -563,6 +563,7 @@
   margin-top: var(--espacio-6);
 }
 .wedit-day {
+  min-height: 56px; /* un día vacío también es un destino fácil al arrastrar */
   display: flex;
   flex-direction: column;
   gap: var(--espacio-2);
@@ -627,4 +628,19 @@
   display: block;
   font-size: 0.875rem;
   color: var(--texto-secundario);
+}
+.wedit-grab {
+  cursor: grab;
+}
+.wedit-grab:active {
+  cursor: grabbing;
+}
+.wedit-title .sh-icon {
+  color: var(--texto-secundario);
+  stroke-width: 3;
+}
+.wedit-over {
+  outline: 2px dashed var(--acento);
+  outline-offset: 6px;
+  border-radius: var(--radio-tarjeta);
 }

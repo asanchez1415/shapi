@@ -216,6 +216,7 @@ const NAV: Record<string, string[]> = {
   pace: ["M4 18a8 8 0 1 1 16 0", "M12 18l4-5", "M12 18h.01"],
   count: ["M9 6h11", "M9 12h11", "M9 18h11", "M4.5 6h.01", "M4.5 12h.01", "M4.5 18h.01"],
   next: ["M9 5l7 7-7 7"],
+  grip: ["M9 6h.01", "M15 6h.01", "M9 12h.01", "M15 12h.01", "M9 18h.01", "M15 18h.01"],
 };
 
 export function NavIcon({ name, size = 24 }: { name: keyof typeof NAV; size?: number }) {

@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addDays, isISODate, todayISO, weekStart } from "@/lib/dates";
-import { describeSession } from "@/lib/describe";
-import { buildStructure, type EditPayload } from "@/lib/edit";
+import type { EditPayload } from "@/lib/edit";
 import { canMarkDone, doneReason, moveBlockedReason } from "@/lib/rules";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -16,7 +15,7 @@ import {
   writeWeek,
   type WeekRow,
 } from "@/lib/weekplan";
-import type { SportSlug, Status } from "@/lib/types";
+import type { Status } from "@/lib/types";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -60,51 +59,6 @@ export async function setStatus(id: string, status: Status): Promise<ActionResul
       updated_at: now,
       // El motivo solo vale mientras la sesión sigue omitida.
       ...(status === "omitida" ? {} : { skip_reason: null }),
-    })
-    .eq("id", id)
-    .select("id");
-  if (error || !updated?.length) return { ok: false, error: "No se pudo guardar. Intenta de nuevo." };
-
-  revalidatePath("/", "layout");
-  return { ok: true };
-}
-
-/** Guarda los cambios de una sesión pendiente. El día no se toca aquí: se mueve con «Mover». */
-export async function updateSession(id: string, payload: EditPayload): Promise<ActionResult> {
-  if (!UUID.test(id) || !payload || typeof payload !== "object") {
-    return { ok: false, error: "No se pudo guardar." };
-  }
-
-  const supabase = await createClient();
-  const { data: current, error: readError } = await supabase
-    .from("sessions")
-    .select("id, status, target, structure, sports(slug)")
-    .eq("id", id)
-    .maybeSingle();
-  if (readError || !current) return { ok: false, error: "No encontramos la sesión." };
-  if (current.status !== "pendiente") {
-    return { ok: false, error: "Solo se editan sesiones pendientes." };
-  }
-
-  const sportRel = current.sports as unknown as { slug: SportSlug } | { slug: SportSlug }[] | null;
-  const sport = (Array.isArray(sportRel) ? sportRel[0]?.slug : sportRel?.slug) ?? "running";
-
-  const built = buildStructure(sport, (current.structure ?? {}) as Record<string, unknown>, payload);
-  if (!built.ok) return { ok: false, error: built.error };
-
-  // La línea de objetivo se mantiene al día con lo que se editó.
-  const card = describeSession(sport, built.structure, null).card;
-  const target = [card.lead, card.side].filter(Boolean).join(" · ") || current.target;
-
-  const { data: updated, error } = await supabase
-    .from("sessions")
-    .update({
-      name: built.name,
-      scheduled_time: built.time,
-      notes: built.notes,
-      structure: built.structure,
-      target,
-      updated_at: new Date().toISOString(),
     })
     .eq("id", id)
     .select("id");
