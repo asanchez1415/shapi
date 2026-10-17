@@ -2,11 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { isISODate, todayISO } from "@/lib/dates";
+import { addDays, isISODate, todayISO, weekStart } from "@/lib/dates";
 import { describeSession } from "@/lib/describe";
 import { buildStructure, type EditPayload } from "@/lib/edit";
 import { canMarkDone, doneReason, moveBlockedReason } from "@/lib/rules";
 import { createClient } from "@/lib/supabase/server";
+import {
+  WEEK_COLUMNS,
+  editedFields,
+  followingWeeksOfMonth,
+  loadTemplate,
+  sportOfRow,
+  writeWeek,
+  type WeekRow,
+} from "@/lib/weekplan";
 import type { SportSlug, Status } from "@/lib/types";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -249,4 +258,155 @@ export async function undoMove(copyId: string): Promise<ActionResult> {
 
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+/* ---------- Semanas ---------- */
+
+export type WeekOutcome = { start: string; created: number; skipped?: string };
+
+export type WeekSavePayload = {
+  /** Sesiones de la semana tal como quedan: las que ya existen (id) y las agregadas desde otra rutina (templateId). */
+  sessions: { id: string | null; templateId?: string | null; day: number; edit: EditPayload }[];
+  /** Sesiones pendientes que se quitan de la semana. */
+  removed: string[];
+  /** Copiar el resultado a las semanas siguientes del mes, reemplazando sus rutinas pendientes. */
+  propagate: boolean;
+};
+
+export type WeekSaveResult = { ok: true; weeks: WeekOutcome[] } | { ok: false; error: string };
+
+const isMonday = (iso: string) => isISODate(iso) && weekStart(iso) === iso;
+
+/**
+ * Guarda la edición de una semana: estructura (día, hora, qué rutinas) y valores de cada rutina.
+ * Con `propagate`, las semanas siguientes del mes quedan iguales a esta; lo hecho, omitido o movido
+ * no se pisa nunca (esas semanas se saltan y se avisa).
+ */
+export async function saveWeek(start: string, payload: WeekSavePayload): Promise<WeekSaveResult> {
+  if (!isMonday(start) || !payload || !Array.isArray(payload.sessions) || !Array.isArray(payload.removed)) {
+    return { ok: false, error: "No se pudo guardar la semana." };
+  }
+  if (payload.sessions.length > 40) return { ok: false, error: "Demasiadas rutinas en una semana." };
+
+  const supabase = await createClient();
+  const { data, error: readError } = await supabase
+    .from("sessions")
+    .select(WEEK_COLUMNS)
+    .gte("scheduled_date", start)
+    .lte("scheduled_date", addDays(start, 6));
+  if (readError) return { ok: false, error: "No se pudo leer la semana." };
+  const rows = new Map(((data ?? []) as unknown as WeekRow[]).map((r) => [r.id, r]));
+
+  const stale = "La semana cambió mientras la editabas. Vuelve a abrirla e inténtalo de nuevo.";
+  const updates: { id: string; date: string; f: Extract<ReturnType<typeof editedFields>, { ok: true }> }[] = [];
+  const inserts: Record<string, unknown>[] = [];
+  const kept = new Set<string>();
+  let weekNumber: number | null = null;
+  for (const r of rows.values()) if (r.week_number !== null) weekNumber = r.week_number;
+
+  for (const [i, item] of payload.sessions.entries()) {
+    const label = item.edit?.name?.trim() ? `«${item.edit.name.trim()}»` : `La rutina ${i + 1}`;
+    if (!Number.isInteger(item.day) || item.day < 0 || item.day > 6 || !item.edit) {
+      return { ok: false, error: `${label}: el día no es válido.` };
+    }
+    const date = addDays(start, item.day);
+
+    if (item.id) {
+      if (!UUID.test(item.id) || kept.has(item.id)) return { ok: false, error: stale };
+      const row = rows.get(item.id);
+      if (!row || row.status !== "pendiente") return { ok: false, error: stale };
+      const f = editedFields(sportOfRow(row), row, item.edit);
+      if (!f.ok) return { ok: false, error: `${label}: ${f.error}` };
+      kept.add(item.id);
+      updates.push({ id: item.id, date, f });
+    } else {
+      const tid = item.templateId ?? "";
+      if (!UUID.test(tid)) return { ok: false, error: `${label}: no se encontró la rutina de origen.` };
+      const { data: t } = await supabase.from("sessions").select(WEEK_COLUMNS).eq("id", tid).maybeSingle();
+      if (!t) return { ok: false, error: `${label}: no se encontró la rutina de origen.` };
+      const tpl = t as unknown as WeekRow;
+      const f = editedFields(sportOfRow(tpl), tpl, item.edit);
+      if (!f.ok) return { ok: false, error: `${label}: ${f.error}` };
+      inserts.push({
+        plan_id: tpl.plan_id,
+        sport_id: tpl.sport_id,
+        name: f.name,
+        scheduled_date: date,
+        scheduled_time: f.time,
+        day_order: 50 + i,
+        week_number: weekNumber,
+        status: "pendiente",
+        target: f.target,
+        structure: f.structure,
+        notes: f.notes,
+      });
+    }
+  }
+
+  for (const id of payload.removed) {
+    const row = UUID.test(id) ? rows.get(id) : undefined;
+    if (!row || row.status !== "pendiente" || kept.has(id)) return { ok: false, error: stale };
+  }
+  // Las pendientes que no vienen en la lista ni se quitaron explícitamente tampoco se tocan.
+
+  const now = new Date().toISOString();
+  for (const u of updates) {
+    const { data: done, error } = await supabase
+      .from("sessions")
+      .update({
+        name: u.f.name,
+        scheduled_date: u.date,
+        scheduled_time: u.f.time,
+        notes: u.f.notes,
+        structure: u.f.structure,
+        target: u.f.target,
+        updated_at: now,
+      })
+      .eq("id", u.id)
+      .eq("status", "pendiente")
+      .select("id");
+    if (error || !done?.length) return { ok: false, error: "No se pudo guardar una de las rutinas. Revisa la semana." };
+  }
+  if (inserts.length) {
+    const { error } = await supabase.from("sessions").insert(inserts);
+    if (error) return { ok: false, error: "No se pudieron agregar las rutinas nuevas." };
+  }
+  if (payload.removed.length) {
+    const { error } = await supabase.from("sessions").delete().in("id", payload.removed);
+    if (error) return { ok: false, error: "No se pudieron quitar algunas rutinas." };
+  }
+
+  const weeks: WeekOutcome[] = [];
+  if (payload.propagate) {
+    const template = await loadTemplate(supabase, start);
+    for (const [k, w] of followingWeeksOfMonth(start).entries()) {
+      const res = await writeWeek(supabase, w, template, k + 1, "replace");
+      weeks.push(res.ok ? { start: w, created: res.created } : { start: w, created: 0, skipped: res.reason });
+    }
+  }
+
+  revalidatePath("/", "layout");
+  return { ok: true, weeks };
+}
+
+/**
+ * Crea una semana vacía y las siguientes del mes copiando la semana anterior.
+ * Las semanas que ya tienen rutinas no se tocan.
+ */
+export async function createWeeks(start: string): Promise<WeekSaveResult> {
+  if (!isMonday(start)) return { ok: false, error: "No se pudo crear la semana." };
+
+  const supabase = await createClient();
+  const template = await loadTemplate(supabase, addDays(start, -7));
+  if (!template.length) return { ok: false, error: "La semana anterior no tiene rutinas para copiar." };
+
+  const weeks: WeekOutcome[] = [];
+  for (const [k, w] of [start, ...followingWeeksOfMonth(start)].entries()) {
+    const res = await writeWeek(supabase, w, template, k + 1, "create");
+    if (!res.ok) return { ok: false, error: res.reason };
+    weeks.push(res.created ? { start: w, created: res.created } : { start: w, created: 0, skipped: "ya tenía rutinas" });
+  }
+
+  revalidatePath("/", "layout");
+  return { ok: true, weeks };
 }

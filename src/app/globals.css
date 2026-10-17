@@ -551,3 +551,80 @@
 .edit-grid > .sh-field {
   min-width: 0;
 }
+
+/* Editor de semana */
+.wedit {
+  max-width: 760px;
+}
+.wedit-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-6);
+  margin-top: var(--espacio-6);
+}
+.wedit-day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+.wedit-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-3);
+  min-width: 0;
+}
+.wedit-time {
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}
+.wedit-actions {
+  display: flex;
+  gap: var(--espacio-4);
+  flex: none;
+}
+.wedit-locked {
+  opacity: 0.7;
+}
+.wedit-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}
+.wedit-add select {
+  width: 100%;
+  min-height: var(--toque-minimo);
+  padding: 0 var(--espacio-3);
+  font: inherit;
+  color: var(--texto-secundario);
+  background: var(--fondo);
+  border: var(--borde-fino) dashed var(--linea);
+  border-radius: var(--radio-campo);
+}
+.wedit-save {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  padding-top: var(--espacio-4);
+  border-top: var(--borde-fino) solid var(--linea);
+  padding-bottom: var(--espacio-8);
+}
+.wedit-check {
+  display: flex;
+  gap: var(--espacio-3);
+  align-items: flex-start;
+  cursor: pointer;
+}
+.wedit-check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--acento);
+}
+.wedit-check small {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--texto-secundario);
+}

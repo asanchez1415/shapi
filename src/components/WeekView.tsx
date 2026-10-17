@@ -4,6 +4,7 @@ import type { SessionItem } from "@/lib/types";
 import { AdherenceBar } from "./AdherenceBar";
 import { DayHeader } from "./DayHeader";
 import { NavIcon } from "./icons";
+import { CreateWeeks } from "./CreateWeeks";
 import { SessionCard } from "./SessionCard";
 
 function Card({ s, compact }: { s: SessionItem; compact?: boolean }) {
@@ -28,10 +29,12 @@ type Props = {
   start: string; // lunes de la semana mostrada
   today: string;
   sessions: SessionItem[];
+  /** Para una semana vacía: si la anterior tiene rutinas que copiar y cuántas semanas del mes se crearían. */
+  create?: { canCopy: boolean; count: number };
 };
 
 // Semana: celular en lista por día; notebook en siete columnas.
-export function WeekView({ start, today, sessions }: Props) {
+export function WeekView({ start, today, sessions, create }: Props) {
   const days = weekDays(start);
   const byDay = (d: string) => sessions.filter((s) => s.date === d);
   const isCurrent = days.includes(today);
@@ -44,6 +47,11 @@ export function WeekView({ start, today, sessions }: Props) {
           <div className="hd-sub sh-num">{formatWeekRange(start)}</div>
         </div>
         <div className="hd-actions">
+          {sessions.length > 0 && (
+            <Link className="ib ib-border ib-text" href={`/semana/editar?w=${start}`}>
+              Editar
+            </Link>
+          )}
           <Link className="ib ib-border" href={`/semana?w=${addDays(start, -7)}`} aria-label="Semana anterior" title="Semana anterior">
             <NavIcon name="back" size={20} />
           </Link>
@@ -57,6 +65,10 @@ export function WeekView({ start, today, sessions }: Props) {
           </Link>
         </div>
       </div>
+
+      {sessions.length === 0 && create ? (
+        <CreateWeeks start={start} canCopy={create.canCopy} count={create.count} />
+      ) : null}
 
       <div className="wk-adh">
         <AdherenceBar sessions={sessions.map((s) => s.status)} />
