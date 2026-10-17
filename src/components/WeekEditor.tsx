@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type DragEvent } from "react";
 import { saveWeek, type WeekSavePayload } from "@/app/(app)/actions";
-import type { EditKind, EditPayload } from "@/lib/edit";
+import { CATEGORIES, categoryOf, newPayload, skeletonFor, type CategoryId, type RunningVariant } from "@/lib/categories";
+import { editKind, type EditKind, type EditPayload } from "@/lib/edit";
 import type { SportSlug } from "@/lib/types";
+import { SelectField } from "./Fields";
 import { NavIcon, StatusIcon } from "./icons";
 import { SessionFields } from "./SessionFields";
 import { useSessionActions } from "./SessionActions";
@@ -13,14 +15,15 @@ import { SportTag } from "./SportTag";
 export type EditorItem = {
   key: string;
   id: string | null;
-  templateId: string | null;
+  /** Solo en rutinas nuevas: de qué categoría se agregó. */
+  category: CategoryId | null;
+  variant: RunningVariant | null;
   sport: SportSlug;
   status: string;
   day: number;
   kind: EditKind;
   payload: EditPayload;
 };
-export type EditorTemplate = { id: string; sport: SportSlug; kind: EditKind; payload: EditPayload };
 export type EditorTarget = { start: string; label: string; blocked: boolean };
 
 const DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -32,12 +35,10 @@ const newKey = () => `n${++counter}`;
 export function WeekEditor({
   start,
   items: initial,
-  templates,
   targets,
 }: {
   start: string;
   items: EditorItem[];
-  templates: EditorTemplate[];
   targets: EditorTarget[];
 }) {
   const router = useRouter();
@@ -67,15 +68,37 @@ export function WeekEditor({
     if (open === it.key) setOpen(null);
   }
 
-  function add(day: number, templateId: string) {
-    const t = templates.find((x) => x.id === templateId);
-    if (!t) return;
+  function add(day: number, id: string) {
+    const cat = categoryOf(id);
+    if (!cat) return;
     const key = newKey();
+    const variant = cat.id === "running" ? ("steady" as const) : null;
     setItems((list) => [
       ...list,
-      { key, id: null, templateId: t.id, sport: t.sport, status: "pendiente", day, kind: t.kind, payload: structuredClone(t.payload) },
+      {
+        key,
+        id: null,
+        category: cat.id,
+        variant,
+        sport: cat.sport,
+        status: "pendiente",
+        day,
+        kind: editKind(cat.sport, skeletonFor(cat.id, variant ?? undefined)),
+        payload: newPayload(cat.id, variant ?? undefined),
+      },
     ]);
     setOpen(key);
+  }
+
+  // Una rutina de running nueva puede ser rodaje o intervalos: cambia los campos, conserva lo común.
+  function setVariant(it: EditorItem, variant: RunningVariant) {
+    const fresh = newPayload("running", variant);
+    patch(it.key, (x) => ({
+      ...x,
+      variant,
+      kind: editKind("running", skeletonFor("running", variant)),
+      payload: { ...fresh, name: x.payload.name, time: x.payload.time, notes: x.payload.notes, duration: x.payload.duration },
+    }));
   }
 
   // Arrastrar una rutina pendiente a otro día cambia su día.
@@ -95,7 +118,7 @@ export function WeekEditor({
     const payload: WeekSavePayload = {
       sessions: items
         .filter((it) => STATUS_OK.includes(it.status))
-        .map((it) => ({ id: it.id, templateId: it.templateId, day: it.day, edit: it.payload })),
+        .map((it) => ({ id: it.id, category: it.category, variant: it.variant, day: it.day, edit: it.payload })),
       removed,
       propagate,
     };
@@ -185,28 +208,42 @@ export function WeekEditor({
                   </div>
                   {editable && isOpen && (
                     <div className="stack">
-                      <SessionFields kind={it.kind} value={it.payload} onChange={(p) => patch(it.key, (x) => ({ ...x, payload: p }))} />
+                      {it.category === "running" && (
+                        <SelectField
+                          label="Tipo"
+                          value={it.variant ?? "steady"}
+                          options={[
+                            { value: "steady", label: "Rodaje o fondo" },
+                            { value: "intervals", label: "Intervalos" },
+                          ]}
+                          onChange={(v) => setVariant(it, v as RunningVariant)}
+                        />
+                      )}
+                      <SessionFields
+                        kind={it.kind}
+                        value={it.payload}
+                        namePlaceholder={it.category ? categoryOf(it.category)?.example : undefined}
+                        onChange={(p) => patch(it.key, (x) => ({ ...x, payload: p }))}
+                      />
                     </div>
                   )}
                 </div>
               );
             })}
-            {templates.length > 0 && (
-              <div className="wedit-add">
-                <select
-                  aria-label={`Agregar rutina el ${dayName.toLowerCase()}`}
-                  value=""
-                  onChange={(e) => add(day, e.target.value)}
-                >
-                  <option value="">Agregar rutina…</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.payload.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className="wedit-add">
+              <select
+                aria-label={`Agregar rutina el ${dayName.toLowerCase()}`}
+                value=""
+                onChange={(e) => add(day, e.target.value)}
+              >
+                <option value="">Agregar rutina…</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </section>
         );
       })}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WeekEditor, type EditorItem, type EditorTarget, type EditorTemplate } from "@/components/WeekEditor";
+import { WeekEditor, type EditorItem, type EditorTarget } from "@/components/WeekEditor";
 import { NavIcon } from "@/components/icons";
 import { addDays, formatShort, formatWeekRange, isISODate, todayISO, weekDays, weekStart } from "@/lib/dates";
 import { editKind, toPayload } from "@/lib/edit";
@@ -34,7 +34,8 @@ export default async function EditarSemanaPage({ searchParams }: { searchParams:
       return {
         key: r.id,
         id: r.id,
-        templateId: null,
+        category: null,
+        variant: null,
         sport,
         status: r.status,
         day: days.indexOf(r.scheduled_date),
@@ -46,34 +47,6 @@ export default async function EditarSemanaPage({ searchParams }: { searchParams:
         }),
       } satisfies EditorItem;
     });
-
-  // Rutinas que se pueden agregar: las que ya existen en el plan, con su versión más reciente
-  const { data: allData } = await supabase
-    .from("sessions")
-    .select(WEEK_COLUMNS)
-    .neq("status", "movida")
-    .order("scheduled_date", { ascending: false })
-    .limit(400);
-  const seen = new Set<string>();
-  const templates: EditorTemplate[] = [];
-  for (const r of (allData ?? []) as unknown as WeekRow[]) {
-    const sport = sportOfRow(r);
-    const key = `${sport}|${r.name}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const structure = (r.structure ?? {}) as Record<string, unknown>;
-    templates.push({
-      id: r.id,
-      sport,
-      kind: editKind(sport, structure),
-      payload: toPayload(sport, structure, {
-        name: r.name,
-        time: r.scheduled_time ? r.scheduled_time.slice(0, 5) : null,
-        notes: r.notes,
-      }),
-    });
-  }
-  templates.sort((a, b) => a.payload.name.localeCompare(b.payload.name, "es"));
 
   // Semanas siguientes del mes y si alguna no se puede reemplazar
   const following = followingWeeksOfMonth(start);
@@ -105,7 +78,7 @@ export default async function EditarSemanaPage({ searchParams }: { searchParams:
         <h1 className="hd-title">Editar semana</h1>
         <p className="meta sh-num">{formatWeekRange(start)}</p>
       </div>
-      <WeekEditor start={start} items={items} templates={templates} targets={targets} />
+      <WeekEditor start={start} items={items} targets={targets} />
     </div>
   );
 }

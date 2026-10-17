@@ -1,6 +1,7 @@
 "use client";
 
 import type { EditKind, EditPayload, EditRow } from "@/lib/edit";
+import { BLANK_ROWS } from "@/lib/categories";
 import { SelectField, TextArea, TextField } from "./Fields";
 
 const TIMES = (() => {
@@ -20,20 +21,18 @@ const ROW_LABELS: Record<"strength" | "skill" | "plyo", { item: string; add: str
   plyo: { item: "Ejercicio", add: "Añadir ejercicio" },
 };
 
-const EMPTY_ROW: Record<"strength" | "skill" | "plyo", Record<string, string>> = {
-  strength: { name: "", reps: "", load: "", rest: "90", note: "" },
-  skill: { name: "", detail: "", time_text: "" },
-  plyo: { name: "", sets: "3", reps: "" },
-};
+const EMPTY_ROW = { strength: BLANK_ROWS.strength, skill: { name: "", detail: "", time_text: "" }, plyo: BLANK_ROWS.plyo };
 
 type Props = {
   kind: EditKind;
   value: EditPayload;
   onChange: (next: EditPayload) => void;
+  /** Ejemplo de nombre cuando el campo está vacío. */
+  namePlaceholder?: string;
 };
 
 /** Campos de edición de una sesión (nombre, hora, duración y lo propio de cada deporte). */
-export function SessionFields({ kind, value: p, onChange }: Props) {
+export function SessionFields({ kind, value: p, onChange, namePlaceholder }: Props) {
   const setP = (next: EditPayload) => onChange(next);
   const setF = (key: string, value: string) => onChange({ ...p, f: { ...p.f, [key]: value } });
   const setRow = (i: number, key: string, value: string) =>
@@ -71,7 +70,7 @@ export function SessionFields({ kind, value: p, onChange }: Props) {
 
   return (
     <>
-      <TextField label="Nombre" value={p.name} maxLength={80} placeholder="Series en pista" onChange={(v) => setP({ ...p, name: v })} />
+      <TextField label="Nombre" value={p.name} maxLength={80} placeholder={namePlaceholder ?? "Series en pista"} onChange={(v) => setP({ ...p, name: v })} />
 
       <div className="edit-grid">
         <SelectField label="Hora" value={p.time} options={timeOptions} onChange={(v) => setP({ ...p, time: v })} />

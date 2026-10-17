@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addDays, isISODate, todayISO, weekStart } from "@/lib/dates";
+import { categoryOf, skeletonFor, type RunningVariant } from "@/lib/categories";
 import type { EditPayload } from "@/lib/edit";
 import { canMarkDone, doneReason, moveBlockedReason } from "@/lib/rules";
 import { createClient } from "@/lib/supabase/server";
@@ -219,8 +220,14 @@ export async function undoMove(copyId: string): Promise<ActionResult> {
 export type WeekOutcome = { start: string; created: number; skipped?: string };
 
 export type WeekSavePayload = {
-  /** Sesiones de la semana tal como quedan: las que ya existen (id) y las agregadas desde otra rutina (templateId). */
-  sessions: { id: string | null; templateId?: string | null; day: number; edit: EditPayload }[];
+  /** Sesiones de la semana tal como quedan: las que ya existen (id) y las nuevas, que traen su categoría. */
+  sessions: {
+    id: string | null;
+    category?: string | null;
+    variant?: string | null;
+    day: number;
+    edit: EditPayload;
+  }[];
   /** Sesiones pendientes que se quitan de la semana. */
   removed: string[];
   /** Copiar el resultado a las semanas siguientes del mes, reemplazando sus rutinas pendientes. */
@@ -256,7 +263,12 @@ export async function saveWeek(start: string, payload: WeekSavePayload): Promise
   const inserts: Record<string, unknown>[] = [];
   const kept = new Set<string>();
   let weekNumber: number | null = null;
-  for (const r of rows.values()) if (r.week_number !== null) weekNumber = r.week_number;
+  let planId: string | null = null;
+  for (const r of rows.values()) {
+    if (r.week_number !== null) weekNumber = r.week_number;
+    if (r.plan_id) planId = r.plan_id;
+  }
+  const sportIds = new Map<string, string>();
 
   for (const [i, item] of payload.sessions.entries()) {
     const label = item.edit?.name?.trim() ? `«${item.edit.name.trim()}»` : `La rutina ${i + 1}`;
@@ -274,16 +286,21 @@ export async function saveWeek(start: string, payload: WeekSavePayload): Promise
       kept.add(item.id);
       updates.push({ id: item.id, date, f });
     } else {
-      const tid = item.templateId ?? "";
-      if (!UUID.test(tid)) return { ok: false, error: `${label}: no se encontró la rutina de origen.` };
-      const { data: t } = await supabase.from("sessions").select(WEEK_COLUMNS).eq("id", tid).maybeSingle();
-      if (!t) return { ok: false, error: `${label}: no se encontró la rutina de origen.` };
-      const tpl = t as unknown as WeekRow;
-      const f = editedFields(sportOfRow(tpl), tpl, item.edit);
+      const cat = categoryOf(item.category);
+      if (!cat) return { ok: false, error: `${label}: elige la categoría de la rutina.` };
+      const variant: RunningVariant = item.variant === "intervals" ? "intervals" : "steady";
+      const f = editedFields(cat.sport, { structure: skeletonFor(cat.id, variant), target: null }, item.edit);
       if (!f.ok) return { ok: false, error: `${label}: ${f.error}` };
+      let sportId = sportIds.get(cat.sport);
+      if (!sportId) {
+        const { data: sport } = await supabase.from("sports").select("id").eq("slug", cat.sport).maybeSingle();
+        if (!sport) return { ok: false, error: `${label}: no encontramos el deporte «${cat.label}».` };
+        sportId = sport.id as string;
+        sportIds.set(cat.sport, sportId);
+      }
       inserts.push({
-        plan_id: tpl.plan_id,
-        sport_id: tpl.sport_id,
+        plan_id: planId,
+        sport_id: sportId,
         name: f.name,
         scheduled_date: date,
         scheduled_time: f.time,
