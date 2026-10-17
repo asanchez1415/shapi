@@ -5,7 +5,6 @@ import { AdherenceBar } from "./AdherenceBar";
 import { DayHeader } from "./DayHeader";
 import { NavIcon } from "./icons";
 import { SessionCard } from "./SessionCard";
-import { WeekColumns } from "./WeekColumns";
 
 function Card({ s, compact }: { s: SessionItem; compact?: boolean }) {
   return (
@@ -82,7 +81,18 @@ export function WeekView({ start, today, sessions }: Props) {
       </div>
 
       {/* Notebook */}
-      <WeekColumns days={days} today={today} sessions={sessions} />
+      <div className="wk">
+        {days.map((d) => (
+          <div key={d} className="wk-col">
+            <DayHeader date={d} today={d === today} />
+            {byDay(d).length ? (
+              byDay(d).map((s) => <Card key={s.id} s={s} compact />)
+            ) : (
+              <div className="wk-rest">Descanso</div>
+            )}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

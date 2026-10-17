@@ -46,7 +46,7 @@ export function SessionCard({
     .join(" ");
 
   const title = href ? (
-    <Link href={href} className="sh-card-open" draggable={false}>
+    <Link href={href} className="sh-card-open">
       {name}
     </Link>
   ) : (
