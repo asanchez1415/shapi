@@ -206,6 +206,8 @@ const NAV: Record<string, string[]> = {
   ],
   nueva: ["M12 5v14", "M5 12h14"],
   back: ["M15 5l-7 7 7 7"],
+  menu: ["M4 7h16", "M4 12h16", "M4 17h16"],
+  close: ["M6 6l12 12", "M18 6L6 18"],
   // Iconos de las filas de la tarjeta
   distance: ["M6 20m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0", "M18 4m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0", "M8 20h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16"],
   time: ["M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0", "M12 7v5l3 2"],

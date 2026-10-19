@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Account } from "@/components/Account";
-import { SideNav, TabBar } from "@/components/AppNav";
+import { SideNav } from "@/components/AppNav";
+import { MobileMenu } from "@/components/MobileMenu";
 import { ActionsProvider } from "@/components/SessionActions";
 import { todayISO } from "@/lib/dates";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -25,9 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <SideNav footer={<Account name={firstName(data.user)} />} />
       </aside>
       <main className="app-main">{children}</main>
-      <div className="app-tabs">
-        <TabBar />
-      </div>
+      <MobileMenu name={firstName(data.user)} />
     </div>
     </ActionsProvider>
   );

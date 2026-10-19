@@ -50,11 +50,7 @@
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: var(--espacio-4) var(--margen-pantalla) var(--espacio-8);
-}
-.app-tabs {
-  position: sticky;
-  bottom: 0;
+  padding: var(--espacio-4) var(--margen-pantalla) calc(var(--espacio-8) + 56px);
 }
 .account {
   display: flex;
@@ -382,7 +378,7 @@
   z-index: 20;
   left: var(--margen-pantalla);
   right: var(--margen-pantalla);
-  bottom: 96px;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* sobre el botón del menú */
 }
 @media (min-width: 1024px) {
   .toast-slot {
@@ -643,4 +639,92 @@
   outline: 2px dashed var(--acento);
   outline-offset: 6px;
   border-radius: var(--radio-tarjeta);
+}
+
+/* Menú del celular: botón flotante abajo a la derecha */
+.mm {
+  --mm-gap: 16px;
+}
+.mm-fab {
+  position: fixed;
+  z-index: 25;
+  right: calc(var(--mm-gap) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--mm-gap) + env(safe-area-inset-bottom, 0px));
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(17, 17, 17, 0.2);
+  -webkit-tap-highlight-color: transparent;
+}
+.mm-fab:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 3px;
+}
+.mm-item,
+.mm-scrim {
+  -webkit-tap-highlight-color: transparent;
+}
+.mm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 23;
+  border: 0;
+  padding: 0;
+  background: rgba(17, 17, 17, 0.12);
+}
+.mm-panel {
+  position: fixed;
+  z-index: 24;
+  right: calc(var(--mm-gap) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--mm-gap) + 48px + 8px + env(safe-area-inset-bottom, 0px));
+  width: min(240px, calc(100vw - 2 * var(--mm-gap)));
+  display: flex;
+  flex-direction: column;
+  padding: var(--espacio-2);
+  background: var(--fondo);
+  border: var(--borde-fino) solid var(--linea);
+  border-radius: var(--radio-tarjeta);
+  box-shadow: 0 6px 24px rgba(17, 17, 17, 0.12);
+}
+.mm-item {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: var(--toque-minimo);
+  padding: 0 var(--espacio-3);
+  border-radius: var(--radio-campo);
+  color: var(--texto-secundario);
+  text-decoration: none;
+}
+.mm-item[aria-current="page"] {
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 600;
+}
+.mm-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-1);
+  padding: var(--espacio-1) var(--espacio-1) 0 var(--espacio-3);
+  border-top: var(--borde-fino) solid var(--linea);
+}
+.mm-name {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-width: 0;
+  color: var(--texto);
+}
+@media (min-width: 1024px) {
+  .mm {
+    display: none;
+  }
 }
